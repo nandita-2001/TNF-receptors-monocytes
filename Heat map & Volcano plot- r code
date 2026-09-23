@@ -135,18 +135,11 @@ library(ggrepel)
 # 1. Enter your data as text
 
 volcano_data <- data.frame(
-  Marker = c("IL-6","IL-12","IL-1b","IL-1a","TNFa","IL-10",
-             "PDL-1","PDL-2","CD163","CD80","CD86","CD206"),
+  Marker = c( #give the markers or any identifier in quotes. If there is multiple names, segregate using comma- for eg- "IL-6", "PD-L1"),
   
-  log2FC = c(
-    1.824394, 1.016392, 0.511524, 1.158993, 0.865740, 0.744022,
-    -0.104112, 0.410819, 0.715856, 0.302462, 1.527642, 0.346430
-  ),
+  log2FC = c( #give the log 2 fold change values obtained in the respective order ),
   
-  pvalue = c(
-    0.000001, 0.001565, 0.041970, 0.007141, 0.000165, 0.002928,
-    0.720162, 0.267883, 0.000033, 0.192008, 0.044707, 0.055974
-  )
+  pvalue = c( #give the p-values in the respective order)
 )
 
 # 2. Transform values
