@@ -1,0 +1,223 @@
+#Heat map- r code 
+
+# HEATMAP WITH DENDROGRAM
+# FOR CORRELATED DATA
+
+
+# Install packages only if required
+install.packages("readxl")
+install.packages("pheatmap")
+
+# Load packages
+library(readxl)
+library(pheatmap)
+
+
+# 1. READ THE ALREADY-CORRELATED DATA
+
+data <- read_excel(
+  "Copy the file as path"
+)
+
+# 2. CHECK THE DATA
+
+print(data)
+print(colnames(data))
+
+
+# 3. CONVERT THE CORRELATION MATRIX TO A NUMERIC MATRIX
+
+# If the first column contains the variable names
+# and the remaining columns contain correlation values:
+
+rownames(data) <- data[[1]]
+
+cor_matrix <- data[, -1]
+
+# Convert all columns to numeric
+cor_matrix <- as.data.frame(
+  lapply(cor_matrix, as.numeric)
+)
+
+# Convert to matrix
+cor_matrix <- as.matrix(cor_matrix)
+
+# Make sure row names are retained
+rownames(cor_matrix) <- rownames(data)
+
+# Make sure column names are retained
+colnames(cor_matrix) <- colnames(data)[-1]
+
+
+# 4. CHECK THE CORRELATION MATRIX
+
+print(cor_matrix)
+
+# Check dimensions
+dim(cor_matrix)
+
+# Check whether values are between -1 and +1
+range(cor_matrix, na.rm = TRUE)
+
+
+# 5. REMOVE COMPLETELY EMPTY ROWS/COLUMNS IF PRESENT
+
+keep_rows <- rowSums(!is.na(cor_matrix)) > 0
+keep_cols <- colSums(!is.na(cor_matrix)) > 0
+
+cor_matrix <- cor_matrix[keep_rows, keep_cols, drop = FALSE]
+
+
+# 6. COLOUR SCALE
+
+
+heat_colors <- colorRampPalette(
+  c("blue", "white", "red")
+)(201)
+
+heat_breaks <- seq(-1, 1, length.out = 202)
+
+
+# 7. GENERATE HEATMAP WITH DENDROGRAMS
+
+pheatmap(
+  cor_matrix,
+
+  # Colour
+  color = heat_colors,
+  breaks = heat_breaks,
+
+  # Dendrograms
+  cluster_rows = TRUE,
+  cluster_cols = TRUE,
+
+  # Hierarchical clustering
+  clustering_distance_rows = "euclidean",
+  clustering_distance_cols = "euclidean",
+  clustering_method = "complete",
+
+  # No numbers inside cells
+  display_numbers = FALSE,
+
+  # Cell borders
+  border_color = "black",
+
+  # Labels
+  fontsize = 10,
+  fontsize_row = 10,
+  fontsize_col = 10,
+  angle_col = 90,
+
+  # Legend
+  legend = TRUE,
+  legend_breaks = c(-1, -0.5, 0, 0.5, 1),
+  legend_labels = c("-1", "-0.5", "0", "0.5", "1"),
+
+  # No title
+  main = "",
+
+  # Dendrogram height
+  treeheight_row = 70,
+  treeheight_col = 70
+)
+
+
+
+
+
+#Volcano plot - r code
+
+# Load required libraries
+library(ggplot2)
+library(ggrepel)
+
+
+# 1. Enter your data as text
+
+volcano_data <- data.frame(
+  Marker = c("IL-6","IL-12","IL-1b","IL-1a","TNFa","IL-10",
+             "PDL-1","PDL-2","CD163","CD80","CD86","CD206"),
+  
+  log2FC = c(
+    1.824394, 1.016392, 0.511524, 1.158993, 0.865740, 0.744022,
+    -0.104112, 0.410819, 0.715856, 0.302462, 1.527642, 0.346430
+  ),
+  
+  pvalue = c(
+    0.000001, 0.001565, 0.041970, 0.007141, 0.000165, 0.002928,
+    0.720162, 0.267883, 0.000033, 0.192008, 0.044707, 0.055974
+  )
+)
+
+# 2. Transform values
+
+volcano_data$negLogP <- -log10(volcano_data$pvalue)
+
+volcano_data$Significance <- ifelse(
+  volcano_data$pvalue < 0.05 & abs(volcano_data$log2FC) >= 1,
+  "Significant",
+  "Non-significant"
+)
+
+# 3. Volcano plot
+
+p <- ggplot(
+  volcano_data,
+  aes(x = log2FC, y = negLogP)
+) +
+  
+  geom_point(
+    aes(color = Significance),
+    size = 4
+  ) +
+  
+  geom_text_repel(
+    aes(label = Marker),
+    size = 4,
+    max.overlaps = 20
+  ) +
+  
+  scale_color_manual(
+    values = c(
+      "Significant" = "red",
+      "Non-significant" = "grey70"
+    )
+  ) +
+  
+  geom_vline(
+    xintercept = c(-1, 1),
+    linetype = "dashed",
+    color = "black"
+  ) +
+  
+  geom_hline(
+    yintercept = -log10(0.05),
+    linetype = "dashed",
+    color = "black"
+  ) +
+  
+  
+  # Y-axis fixed from 0 to 8 # for plotting the points closer
+  scale_y_continuous(
+    limits = c(0, 8),
+    breaks = seq(0, 8, by = 2)
+  ) +
+  
+  labs(
+    title = "TB vs TB–DM (WCL)",
+    x = "Log2 Fold Change",
+    y = "-log10(P value)"
+  ) +
+  
+  theme_bw(base_size = 14) +
+  
+  theme(
+    plot.title = element_text(
+      hjust = 0.5,
+      face = "bold"
+    ),
+    legend.title = element_blank()
+  )
+
+# Display plot
+print(p)
